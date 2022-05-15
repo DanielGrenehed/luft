@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="@{'Zone ' + ${ZoneName}}"></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+</head>
+<body>
+<style>
+    * {
+        font-family: 'Montserrat', sans-serif;
+    }
+    body {
+        margin: 1em;
+    }
+    .card {
+        margin: 1em;
+    }
+    th {
+        width: 50%;
+    }
+</style>
+<div style="display: block;">
+    <h1 th:text="@{'Zone ' + ${ZoneName}}" style="float: left;"></h1>
+    <h2 th:text="@{'Price: ' + ${ElectricityPrice}}" style="float: right;"></h2>
+</div>
+<!--
+    Setup templates for fetching sensor data
+ -->
+<div id="sensor-views" style="clear: both;">
+    <div th:each="sensor : ${Sensors}">
+        <div class="sensor_div card w-75" th:id="${sensor.id}">
+            <div class="card-header">
+                <table style="width: 100%;">
+                    <tr class="card-header-row">
+                        <td th:text="${sensor.sensor_name}" style="width: 50%;"></td>
+                    </tr>
+                </table>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+</body>
+<script>
+    function dateFromTimestamp(time) {
+        const date = new Date(time);
+        return date.getFullYear() + "-" + date.getMonth() + "-" + date.getDate();
+    }
+
+    function createTableCell(content) {
+        const cell = document.createElement("td");
+        cell.innerText = content;
+        return cell;
+    }
+
+    function createTable(labelHTML) {
+        const table = document.createElement("table");
+        table.setAttribute("class", "table table-striped table-dark");
+        table.innerHTML = labelHTML;
+        return table;
+    }
+
+    function createTemperatureRow(job) {
+        const table_row = document.createElement("tr");
+        const temp = createTableCell(job.temperature);
+        temp.setAttribute("scope", "row");
+        table_row.appendChild(temp);
+        table_row.appendChild(createTableCell(dateFromTimestamp(job.time)));
+        return table_row;
+    }
+
+    function createHumidityRow(job) {
+        const table_row = document.createElement("tr");
+        const humid = createTableCell(job.humidity);
+        humid.setAttribute("scope", "row");
+        table_row.appendChild(humid);
+        table_row.appendChild(createTableCell(dateFromTimestamp(job.time)));
+        return table_row;
+    }
+
+    function addTemperatureData(parent, temps) {
+        if (temps.length < 1) return;
+        const table = createTable("<thead><th scope=\"col\">Temperature</th><th scope=\"col\">Date</th></thead>");
+        const tbody = document.createElement("tbody");
+        for (var i = 0; i < temps.length; i++) {
+            tbody.appendChild(createTemperatureRow(temps[i]));
+        }
+        table.appendChild(tbody);
+        parent.appendChild(table);
+    }
+
+    function addHumidityData(parent, humids) {
+        if (humids.length < 1) return;
+        const table = createTable("<thead><th scope=\"col\">Humidity</th><th scope=\"col\">Date</th></thead>");
+        const tbody = document.createElement("tbody");
+        for (var i = 0; i < humids.length; i++) {
+            tbody.appendChild(createHumidityRow(humids[i]));
+        }
+        table.appendChild(tbody);
+        parent.appendChild(table);
+    }
+
+    var sensor_divs = document.getElementsByClassName("sensor_div");
+    for (var i = 0; i < sensor_divs.length; i++) {
+        const parent = sensor_divs[i];
+        const sensor_id = sensor_divs[i].getAttribute("id");
+        const card_body = document.createElement("div");
+        card_body.setAttribute("class", "card-body");
+        const card_header = parent.getElementsByClassName("card-header-row")[0];
+
+        let url = '/temperature/' + sensor_id;
+        fetch(url).then(res => res.json()).then((out) => {
+            card_header.appendChild(createTableCell(out.temperature + ' °C'));
+        });
+
+        url = '/humidity/' +sensor_id;
+        fetch(url).then(res => res.json()).then((out) => {
+           card_header.appendChild(createTableCell(out.humidity + ' RH%'));
+        });
+
+        url = '/temperatures/' + sensor_id;
+        console.log(url);
+        fetch(url).then(res => res.json()).then((out) => {
+            console.log(out);
+            addTemperatureData(card_body, out);
+        });
+
+        url = '/humidities/' + sensor_id;
+        console.log(url);
+        fetch(url).then(res => res.json()).then((out) => {
+            console.log(out);
+            addHumidityData(card_body, out);
+        });
+        parent.appendChild(card_body)
+    }
+</script>
+</html>

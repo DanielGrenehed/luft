@@ -9,8 +9,18 @@ CREATE TABLE person (
     id INT GENERATED ALWAYS AS IDENTITY UNIQUE,
     first_name VARCHAR,
     last_name VARCHAR,
+    username VARCHAR UNIQUE,
     email VARCHAR,
     phone VARCHAR,
+    PRIMARY KEY (id)
+);
+
+/*
+    Zones
+*/
+CREATE TABLE sensor_zone (
+    id INT GENERATED ALWAYS AS IDENTITY UNIQUE,
+    tag VARCHAR NOT NULL,
     PRIMARY KEY (id)
 );
 
@@ -19,8 +29,9 @@ CREATE TABLE person (
 */
 CREATE TABLE sensor (
     id INT GENERATED ALWAYS AS IDENTITY UNIQUE,
-    token VARCHAR UNIQUE, 
-    sensor_name VARCHAR,
+    token VARCHAR NOT NULL UNIQUE, 
+    sensor_name VARCHAR NOT NULL,
+    zone_id INT NULL REFERENCES sensor_zone(id),
     proprietor INT NULL REFERENCES person(id),
     PRIMARY KEY (id)
 );

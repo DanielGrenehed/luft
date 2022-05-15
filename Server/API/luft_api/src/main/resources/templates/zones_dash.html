@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>LUFT ZONES</title>
+    <!-- CSS only -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+
+</head>
+<body>
+<h1>Zones</h1>
+
+<table class="table table-striped table-dark">
+    <thead>
+        <th scope="col">Name</th>
+        <th>ID</th>
+        <th>Sensor count</th>
+        <th></th>
+    </thead>
+  <tbody>
+      <tr th:each="zone : ${zones}">
+          <td scope="row" th:text="${zone.name}"></td>
+          <td th:text="${zone.id}"></td>
+          <td th:text="${zone.sensor_count}"></td>
+          <td><a th:href="@{'/dash/' + ${zone.id}}">view</a></td>
+      </tr>
+  </tbody>
+</table>
+</body>
+</html>
