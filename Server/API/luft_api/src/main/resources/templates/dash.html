@@ -5,7 +5,7 @@
     <title th:text="@{'Zone ' + ${ZoneName}}"></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
 </head>
-<body>
+<body class="bg-dark text-white">
 <style>
     * {
         font-family: 'Montserrat', sans-serif;
@@ -29,8 +29,8 @@
  -->
 <div id="sensor-views" style="clear: both;">
     <div th:each="sensor : ${Sensors}">
-        <div class="sensor_div card w-75" th:id="${sensor.id}">
-            <div class="card-header">
+        <div class="sensor_div card w-75 bg-dark text-white" th:id="${sensor.id}">
+            <div class="card-header bg-warning text-dark">
                 <table style="width: 100%;">
                     <tr class="card-header-row">
                         <td th:text="${sensor.sensor_name}" style="width: 50%;"></td>
