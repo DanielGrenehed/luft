@@ -28,7 +28,7 @@ public class ZoneDAO {
 
 	public Zone getZone(int zone_id) throws SQLException {
 		Promise result = new Promise();
-		PreparedStatement stmt = dbao.prepareStatement("SELECT sensor_zone.id, sensor_zone.tag, COUNT(sensor.zone_id) AS sensor_count FROM luft_sc.sensor_zone LEFT JOIN luft_sc.sensor ON sensor_zone.id = sensor.zone_id WHERE sensor_zone.id=? GROUP BY sensor_zone.id, sensor_zone.tag ORDER BY sensor_count DESC;");
+		PreparedStatement stmt = dbao.prepareStatement("SELECT sensor_zone.id, sensor_zone.tag, COUNT(sensor.zone_id) AS sensor_count FROM luft_sc.sensor_zone LEFT JOIN luft_sc.sensor ON sensor_zone.id = sensor.zone_id WHERE sensor_zone.id=? GROUP BY sensor_zone.id, sensor_zone.tag ORDER BY sensor_zone.id, sensor_zone.tag DESC;");
 		stmt.setInt(1, zone_id);
 		dbao.Query(stmt, set -> {
 			while (set.next()) result.set(getFromSet(set));

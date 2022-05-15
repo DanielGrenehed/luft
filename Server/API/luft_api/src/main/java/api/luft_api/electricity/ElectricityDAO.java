@@ -29,10 +29,12 @@ public class ElectricityDAO {
 	public Electricity postElectricity(Electricity price) throws SQLException {
 		PreparedStatement stmt = dbao.prepareUpdateStatement("INSERT INTO luft_sc.electricity_price (price, log_time) values (?, ?);");
 		stmt.setFloat(1, price.getPrice());
-		if (price.getTime() != null) stmt.setTimestamp(3, new Timestamp(price.getTime().getTime()));
-		else stmt.setTimestamp(3, new Timestamp((new Date()).getTime()));
+		if (price.getTime() != null) stmt.setTimestamp(2, new Timestamp(price.getTime().getTime()));
+		else stmt.setTimestamp(2, new Timestamp((new Date()).getTime()));
 		Promise result = new Promise();
-		dbao.QueryUpdate(stmt, ((affected, set) -> { if (affected > 0) while (set.next()) result.set(getFromSet(set)); }));
+		dbao.QueryUpdate(stmt, ((affected, set) -> {
+			if (affected > 0) while (set.next()) result.set(getFromSet(set));
+		}));
 		return result.isSet() ? (Electricity) result.get() : null;
 	}
 }
