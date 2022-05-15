@@ -91,5 +91,19 @@ SELECT sensor_zone.id, sensor_zone.tag, COUNT(sensor.zone_id) AS sensor_count FR
 
 Create sensor
 ```SQL
-insert into luft_sc.sensor (token, sensor_name) values ('0C:B8:15:D2:14:BC', 'esp32_TH');
+insert into luft_sc.sensor (token, sensor_name, zone_id) values ('0C:B8:15:D2:14:BC', 'esp32_TH', 1);
+```
+
+```SQL
+INSERT INTO luft_sc.humidity (humidity, sensor_id) values (0, (SELECT id FROM luft_sc.sensor WHERE token='0C:B8:15:D2:14:BC'));
+```
+
+Create Zones
+```SQL
+insert into luft_sc.sensor_zone (tag) values ('A'), ('B'), ('C');
+```
+
+Create price now
+```SQL
+insert into luft_sc.electricity_price (price) values (22.5);
 ```
