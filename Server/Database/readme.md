@@ -61,21 +61,28 @@ Create test zone
 insert into luft_sc.sensor_zone (tag) values ('test');
 ```
 
+Set sensor zone
 ```SQL
 UPDATE luft_sc.sensor SET zone_id=? WHERE id=?;
 ```
 
+List sensors in zone
 ```SQL
 SELECT id, token, sensor_name FROM luft_sc.sensor WHERE zone_id=?;
 ```
 
+List zones and number of sensors in zone
 ```SQL
 SELECT sensor_zone.id, sensor_zone.tag, COUNT(sensor.zone_id) AS sensor_count FROM sensor_zone LEFT JOIN sensor ON sensor_zone.id = sensor.zone_id GROUP BY sensor_zone.id, sensor_zone.tag;
 ```
 
+Get sensors by zone
 ```SQL
 SELECT * FROM luft_sc.sensor WHERE zone_id=?;
+```
 
+Get all humidity entries in zone
+```SQL
 SELECT * FROM luft_sc.humidity WHERE sensor_id IN (SELECT id FROM luft_sc.sensor WHERE zone_id=?) ORDER BY log_time DESC LIMIT 1;
 ```
 
@@ -94,6 +101,7 @@ Create sensor
 insert into luft_sc.sensor (token, sensor_name, zone_id) values ('0C:B8:15:D2:14:BC', 'esp32_TH', 1);
 ```
 
+Insert new humidity entry by sensor token
 ```SQL
 INSERT INTO luft_sc.humidity (humidity, sensor_id) values (0, (SELECT id FROM luft_sc.sensor WHERE token='0C:B8:15:D2:14:BC'));
 ```
@@ -106,4 +114,26 @@ insert into luft_sc.sensor_zone (tag) values ('A'), ('B'), ('C');
 Create price now
 ```SQL
 insert into luft_sc.electricity_price (price) values (22.5);
+```
+
+Get average humidity for every 10 minutes one day from one sensor
+```SQL
+SELECT AVG(humidity) AS humidity, log_time FROM 
+(SELECT humidity, to_timestamp(FLOOR((EXTRACT(epoch from log_time))/600)*600) AS log_time FROM luft_sc.humidity WHERE sensor_id=4 AND CAST(log_time AS DATE)='2022-05-15' GROUP BY log_time, humidity ORDER BY log_time DESC) AS ten_minute_logs GROUP BY log_time ORDER BY log_time DESC;
+```
+
+Get average temperature for every 10 minutes one day from one sensor
+```SQL
+SELECT AVG(temperature) AS temperature, MAX(temperature), MIN(temperature), log_time FROM 
+(SELECT temperature, to_timestamp(FLOOR((EXTRACT(epoch from log_time))/600)*600) AS log_time FROM luft_sc.temperature WHERE sensor_id=4 AND CAST(log_time AS DATE)='2022-05-15' GROUP BY log_time, temperature ORDER BY log_time DESC) AS ten_minute_logs GROUP BY log_time ORDER BY log_time DESC;
+```
+
+Get average temperature of every 10 minutes of all days in period
+```SQL
+SELECT AVG(temperature) AS temperature, to_timestamp(to_char(log_time, 'HH24:MI'), 'HH24:MI') AS log_time FROM (SELECT temperature, to_timestamp(FLOOR((EXTRACT(epoch FROM log_time))/600)*600) AS log_time FROM luft_sc.temperature WHERE sensor_id=4 AND CAST(log_time AS DATE) BETWEEN '2022-05-15' AND '2022-05-15' GROUP BY log_time, temperature ORDER BY log_time DESC) AS ten_minute_logs GROUP BY log_time ORDER BY log_time DESC;
+```
+
+Get average humidity of every 10 minutes of all days in period
+```SQL
+SELECT AVG(humidity) AS humidity, to_timestamp(to_char(log_time, 'HH24:MI'), 'HH24:MI') AS log_time FROM (SELECT humidity, to_timestamp(FLOOR((EXTRACT(epoch FROM log_time))/600)*600) AS log_time FROM luft_sc.humidity WHERE sensor_id=? AND CAST(log_time AS DATE) BETWEEN ? AND ? GROUP BY log_time, humidity ORDER BY log_time DESC) AS ten_minute_logs GROUP BY log_time ORDER BY log_time DESC;
 ```

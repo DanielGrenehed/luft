@@ -9,6 +9,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -21,6 +23,12 @@ public class TemperatureDAO {
 		return new Temperature(set.getFloat("temperature"), set.getTimestamp("log_time"));
 	}
 
+	private List<Temperature> queryList(PreparedStatement statement) throws SQLException {
+		List<Temperature> result = new ArrayList<>();
+		dbao.Query(statement, set -> { while (set.next()) result.add(getFromSet(set));});
+		return result;
+	}
+
 	public Temperature getLatestTemperature(int sensor_id) throws SQLException {
 		PreparedStatement stmt = dbao.prepareStatement("SELECT * FROM luft_sc.temperature WHERE sensor_id=? ORDER BY log_time DESC LIMIT 1;");
 		stmt.setInt(1, sensor_id);
@@ -29,12 +37,26 @@ public class TemperatureDAO {
 		return (Temperature) result.get();
 	}
 
+	static DateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
+	public List<Temperature> getAveragesForDate(Date date, int sensor_id) throws SQLException {
+		PreparedStatement stmt = dbao.prepareStatement("SELECT AVG(temperature) AS temperature, log_time FROM (SELECT temperature, to_timestamp(FLOOR((EXTRACT(epoch from log_time))/600)*600) AS log_time FROM luft_sc.temperature WHERE sensor_id=? AND CAST(log_time AS DATE)=? GROUP BY log_time, temperature ORDER BY log_time DESC) AS ten_minute_logs GROUP BY log_time ORDER BY log_time DESC;");
+		stmt.setInt(1, sensor_id);
+		stmt.setString(2, dateFormat.format(date));
+		return queryList(stmt);
+	}
+
+	public List<Temperature> getDailyAveragesForPeriod(int sensor_id, Date start, Date end) throws SQLException {
+		PreparedStatement stmt = dbao.prepareStatement("SELECT AVG(temperature) AS temperature, to_timestamp(to_char(log_time, 'HH24:MI'), 'HH24:MI') AS log_time FROM (SELECT temperature, to_timestamp(FLOOR((EXTRACT(epoch FROM log_time))/600)*600) AS log_time FROM luft_sc.temperature WHERE sensor_id=? AND CAST(log_time AS DATE) BETWEEN ? AND ? GROUP BY log_time, temperature ORDER BY log_time DESC) AS ten_minute_logs GROUP BY log_time ORDER BY log_time DESC;");
+		stmt.setInt(1, sensor_id);
+		stmt.setString(2, dateFormat.format(start));
+		stmt.setString(3, dateFormat.format(end));
+		return queryList(stmt);
+	}
+
 	public List<Temperature> getAverageTemperatures(int sensor_id) throws SQLException {
 		PreparedStatement stmt = dbao.prepareStatement("SELECT sensor_id, CAST(log_time AS DATE), AVG(temperature) AS temperature FROM luft_sc.temperature WHERE sensor_id=? GROUP BY sensor_id, CAST(log_time AS DATE) ORDER BY log_time DESC;");
 		stmt.setInt(1, sensor_id);
-		List<Temperature> result = new ArrayList<>();
-		dbao.Query(stmt, set -> { while (set.next()) result.add(getFromSet(set)); });
-		return result;
+		return queryList(stmt);
 	}
 
 	public Temperature getLatestZoneValue(int zone_id) throws SQLException {
