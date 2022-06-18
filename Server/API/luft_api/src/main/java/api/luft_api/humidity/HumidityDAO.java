@@ -26,6 +26,16 @@ public class HumidityDAO {
 		return result;
 	}
 
+	private AverageHumidity getAverageFromSet(ResultSet set) throws SQLException {
+		return new AverageHumidity(set.getFloat("humidity"), set.getTimestamp("log_time"), set.getFloat("min"), set.getFloat("max"));
+	}
+
+	private List<AverageHumidity> queryAverageList(PreparedStatement statement) throws SQLException {
+		List<AverageHumidity> result = new ArrayList<>();
+		dbao.Query(statement, set -> { while (set.next()) result.add(getAverageFromSet(set)); });
+		return result;
+	}
+
 	public Humidity getLatestValue(int sensor_id) throws SQLException {
 		PreparedStatement stmt = dbao.prepareStatement("SELECT * FROM luft_sc.humidity WHERE sensor_id=? ORDER BY log_time DESC LIMIT 1;");
 		stmt.setInt(1, sensor_id);
@@ -44,12 +54,12 @@ public class HumidityDAO {
 		return queryList(stmt);
 	}
 
-	public List<Humidity> getDailyAveragesForPeriod(int sensor_id, Date start, Date end) throws SQLException {
-		PreparedStatement stmt = dbao.prepareStatement("SELECT AVG(humidity) AS humidity, to_timestamp(to_char(log_time, 'HH24:MI'), 'HH24:MI') AS log_time FROM (SELECT humidity, to_timestamp(FLOOR((EXTRACT(epoch FROM log_time))/600)*600) AS log_time FROM luft_sc.humidity WHERE sensor_id=? AND CAST(log_time AS DATE) BETWEEN ? AND ? GROUP BY log_time, humidity ORDER BY log_time DESC) AS ten_minute_logs GROUP BY log_time ORDER BY log_time DESC;");
+	public List<AverageHumidity> getDailyAveragesForPeriod(int sensor_id, Date start, Date end) throws SQLException {
+		PreparedStatement stmt = dbao.prepareStatement("SELECT AVG(humidity) AS humidity, to_timestamp(to_char(log_time, 'HH24:MI'), 'HH24:MI') AS log_time, MIN(humidity), MAX(humidity) FROM (SELECT humidity, to_timestamp(FLOOR((EXTRACT(epoch FROM log_time))/600)*600) AS log_time FROM luft_sc.humidity WHERE sensor_id=? AND CAST(log_time AS DATE) BETWEEN ? AND ? GROUP BY log_time, humidity ORDER BY log_time DESC) AS ten_minute_logs GROUP BY log_time ORDER BY log_time DESC;");
 		stmt.setInt(1, sensor_id);
 		stmt.setTimestamp(2, new Timestamp(start.getTime()));
 		stmt.setTimestamp(3, new Timestamp(end.getTime()));
-		return queryList(stmt);
+		return queryAverageList(stmt);
 	}
 
 	/*

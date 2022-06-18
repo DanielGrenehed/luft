@@ -4,7 +4,9 @@ import api.luft_api.Promise;
 import api.luft_api.database.DataBaseAccessObject;
 import api.luft_api.database.SharedDBAO;
 import api.luft_api.humidity.Humidity;
+import api.luft_api.humidity.HumidityDispatcher;
 import api.luft_api.temperature.Temperature;
+import api.luft_api.temperature.TemperatureDispatcher;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,6 +28,16 @@ public class SensorDAO {
 		stmt.setInt(1, zone_id);
 		List<Sensor> result = new ArrayList<>();
 		dbao.Query(stmt, set -> { while (set.next()) result.add(getFromSet(set)); });
+		return result;
+	}
+
+	public SensorID getSensorIdFromToken(String token) throws SQLException {
+		PreparedStatement statement = dbao.prepareStatement("SELECT id FROM luft_sc.sensor WHERE token=?;");
+		statement.setString(1, token);
+		SensorID result = new SensorID();
+		dbao.Query(statement, set -> {
+			while (set.next()) result.setSensor_id(set.getInt("id"));
+		});
 		return result;
 	}
 
@@ -58,6 +70,16 @@ public class SensorDAO {
 			}));
 		} catch (SQLException e) {
 			System.out.print("t.");
+		}
+
+		SensorID sid = getSensorIdFromToken(insert.getToken());
+		if (humidity_res.isSet()) {
+			// post humidity to ws
+			HumidityDispatcher.getInstance().dispatchHumidity((Humidity) humidity_res.get(), sid);
+		}
+		if (temperature_res.isSet()) {
+			// post temperature to ws
+			TemperatureDispatcher.getInstance().dispatchTemperature((Temperature) temperature_res.get(), sid);
 		}
 
 		return humidity_res.isSet() && temperature_res.isSet();

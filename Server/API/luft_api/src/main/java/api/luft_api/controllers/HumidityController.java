@@ -1,5 +1,6 @@
 package api.luft_api.controllers;
 
+import api.luft_api.humidity.AverageHumidity;
 import api.luft_api.humidity.Humidity;
 import api.luft_api.humidity.HumidityDAO;
 import api.luft_api.humidity.HumidityInsertion;
@@ -36,9 +37,9 @@ public class HumidityController {
 	public List<Humidity> getAveragesForDate(@PathVariable("date") @DateTimeFormat(pattern = "yyyy-MM-dd") Date date, @PathVariable int id) throws SQLException {
 		return dao.getAveragesForDate(date, id);
 	}
-	private static final Date zdate = new Date(1700, 1, 1);
+	private static final Date zdate = new Date(0, 0, 1);
 	@GetMapping("/humidities/averages/{id}")
-	public List<Humidity> getAveragesForPeriod(@PathVariable int id, @RequestParam(name = "start", required = false) String s_start, @RequestParam(name = "end", required = false) String s_end) throws SQLException {
+	public List<AverageHumidity> getAveragesForPeriod(@PathVariable int id, @RequestParam(name = "start", required = false) String s_start, @RequestParam(name = "end", required = false) String s_end) throws SQLException {
 		Date start = s_start == null ? zdate: null, end = s_end == null ? new Date() : null;
 		try {
 			start = start == null ? new SimpleDateFormat("yyyy-MM-dd").parse(s_start) : start;

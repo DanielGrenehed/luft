@@ -1,5 +1,6 @@
 package api.luft_api.controllers;
 
+import api.luft_api.temperature.AverageTemperature;
 import api.luft_api.temperature.Temperature;
 import api.luft_api.temperature.TemperatureDAO;
 import api.luft_api.temperature.TemperatureInsertion;
@@ -36,9 +37,9 @@ public class TemperatureController {
 		return dao.getAveragesForDate(date, id);
 	}
 
-	private static final Date zdate = new Date(1700, 1, 1);
+	private static final Date zdate = new Date(0, 0, 1);
 	@GetMapping("/temperatures/averages/{id}")
-	public List<Temperature> getAveragesForPeriod(@PathVariable int id, @RequestParam(name = "start", required = false) String s_start, @RequestParam(name = "end", required = false) String s_end) throws SQLException {
+	public List<AverageTemperature> getAveragesForPeriod(@PathVariable int id, @RequestParam(name = "start", required = false) String s_start, @RequestParam(name = "end", required = false) String s_end) throws SQLException {
 		Date start = s_start == null ? zdate:null , end = s_end == null ? new Date() : null;
 		try {
 			start = start == null ? new SimpleDateFormat("yyyy-MM-dd").parse(s_start) : start;

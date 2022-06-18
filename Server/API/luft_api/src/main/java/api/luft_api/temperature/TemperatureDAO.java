@@ -3,6 +3,7 @@ package api.luft_api.temperature;
 import api.luft_api.Promise;
 import api.luft_api.database.DataBaseAccessObject;
 import api.luft_api.database.SharedDBAO;
+import api.luft_api.humidity.AverageHumidity;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,6 +27,16 @@ public class TemperatureDAO {
 		return result;
 	}
 
+	private AverageTemperature getAverageFromSet(ResultSet set) throws SQLException {
+		return new AverageTemperature(set.getFloat("temperature"), set.getTimestamp("log_time"), set.getFloat("min"), set.getFloat("max"));
+	}
+
+	private List<AverageTemperature> queryAverageList(PreparedStatement statement) throws SQLException {
+		List<AverageTemperature> result = new ArrayList<>();
+		dbao.Query(statement, set -> { while (set.next()) result.add(getAverageFromSet(set)); });
+		return result;
+	}
+
 	public Temperature getLatestTemperature(int sensor_id) throws SQLException {
 		PreparedStatement stmt = dbao.prepareStatement("SELECT * FROM luft_sc.temperature WHERE sensor_id=? ORDER BY log_time DESC LIMIT 1;");
 		stmt.setInt(1, sensor_id);
@@ -41,12 +52,12 @@ public class TemperatureDAO {
 		return queryList(stmt);
 	}
 
-	public List<Temperature> getDailyAveragesForPeriod(int sensor_id, Date start, Date end) throws SQLException {
-		PreparedStatement stmt = dbao.prepareStatement("SELECT AVG(temperature) AS temperature, to_timestamp(to_char(log_time, 'HH24:MI'), 'HH24:MI') AS log_time FROM (SELECT temperature, to_timestamp(FLOOR((EXTRACT(epoch FROM log_time))/600)*600) AS log_time FROM luft_sc.temperature WHERE sensor_id=? AND CAST(log_time AS DATE) BETWEEN ? AND ? GROUP BY log_time, temperature ORDER BY log_time DESC) AS ten_minute_logs GROUP BY log_time ORDER BY log_time DESC;");
+	public List<AverageTemperature> getDailyAveragesForPeriod(int sensor_id, Date start, Date end) throws SQLException {
+		PreparedStatement stmt = dbao.prepareStatement("SELECT AVG(temperature) AS temperature, to_timestamp(to_char(log_time, 'HH24:MI'), 'HH24:MI') AS log_time, MIN(temperature), MAX(temperature) FROM (SELECT temperature, to_timestamp(FLOOR((EXTRACT(epoch FROM log_time))/600)*600) AS log_time FROM luft_sc.temperature WHERE sensor_id=? AND CAST(log_time AS DATE) BETWEEN ? AND ? GROUP BY log_time, temperature ORDER BY log_time DESC) AS ten_minute_logs GROUP BY log_time ORDER BY log_time DESC;");
 		stmt.setInt(1, sensor_id);
 		stmt.setTimestamp(2, new Timestamp(start.getTime()));
 		stmt.setTimestamp(3, new Timestamp(end.getTime()));
-		return queryList(stmt);
+		return queryAverageList(stmt);
 	}
 
 	public List<Temperature> getAverageTemperatures(int sensor_id) throws SQLException {

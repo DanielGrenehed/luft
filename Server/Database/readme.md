@@ -137,3 +137,8 @@ Get average humidity of every 10 minutes of all days in period
 ```SQL
 SELECT AVG(humidity) AS humidity, to_timestamp(to_char(log_time, 'HH24:MI'), 'HH24:MI') AS log_time FROM (SELECT humidity, to_timestamp(FLOOR((EXTRACT(epoch FROM log_time))/600)*600) AS log_time FROM luft_sc.humidity WHERE sensor_id=? AND CAST(log_time AS DATE) BETWEEN ? AND ? GROUP BY log_time, humidity ORDER BY log_time DESC) AS ten_minute_logs GROUP BY log_time ORDER BY log_time DESC;
 ```
+
+Get average humidity of every 10 minutes of all days in period with min and max humidities
+```SQL
+SELECT AVG(humidity) AS humidity, to_timestamp(to_char(log_time, 'HH24:MI'), 'HH24:MI') AS log_time, MIN(humidity), MAX(humidity) FROM (SELECT humidity, to_timestamp(FLOOR((EXTRACT(epoch FROM log_time))/600)*600) AS log_time FROM luft_sc.humidity WHERE sensor_id=? AND CAST(log_time AS DATE) BETWEEN ? AND ? GROUP BY log_time, humidity ORDER BY log_time DESC) AS ten_minute_logs GROUP BY log_time ORDER BY log_time DESC;
+```
